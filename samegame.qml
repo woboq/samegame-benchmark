@@ -39,7 +39,6 @@
 ****************************************************************************/
 
 import QtQuick 2.0
-import QtQuick.Particles 2.0
 import "content/samegame.js" as Logic
 import "content"
 
@@ -95,11 +94,6 @@ Rectangle {
 
         backgroundVisible: root.state == "in-game"
         onModeChanged: if (gameCanvas.mode != "puzzle") puzzleWon = false; //UI has stricter constraints on this variable than the game does
-        Age {
-            groups: ["redspots", "greenspots", "bluespots", "yellowspots"]
-            enabled: root.state == ""
-            system: gameCanvas.ps
-        }
 
         onPuzzleLost: acc--;//So that nextPuzzle() reloads the current one
 
@@ -115,7 +109,6 @@ Rectangle {
         LogoAnimation {
             x: 64
             y: Settings.headerHeight
-            particleSystem: gameCanvas.ps
             running: root.state == ""
         }
         Row {
@@ -145,8 +138,6 @@ Rectangle {
                     arcadeTimer.start();
                 }
                 //Emitted particles don't fade out, because ImageParticle is on the GameArea
-                system: gameCanvas.ps
-                group: "green"
                 Timer {
                     id: arcadeTimer
                     interval: Settings.menuDelay
@@ -168,8 +159,6 @@ Rectangle {
                     gameCanvas.background = "gfx/background.png"
                     twopTimer.start();
                 }
-                system: gameCanvas.ps
-                group: "green"
                 Timer {
                     id: twopTimer
                     interval: Settings.menuDelay
@@ -191,8 +180,6 @@ Rectangle {
                     gameCanvas.background = "gfx/background.png"
                     endlessTimer.start();
                 }
-                system: gameCanvas.ps
-                group: "blue"
                 Timer {
                     id: endlessTimer
                     interval: Settings.menuDelay
@@ -206,7 +193,6 @@ Rectangle {
                 width: root.width
                 rotatedButton: true
                 imgSrc: "content/gfx/but-game-4.png"
-                group: "yellow"
                 onClicked: {
                     if (root.state == "in-game")
                         return
@@ -222,7 +208,6 @@ Rectangle {
                     repeat  : false
                     onTriggered: loadPuzzle();
                 }
-                system: gameCanvas.ps
             }
         }
     }

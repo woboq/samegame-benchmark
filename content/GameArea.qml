@@ -39,7 +39,6 @@
 ****************************************************************************/
 
 import QtQuick 2.0
-import QtQuick.Particles 2.0
 import "samegame.js" as Logic
 import "."
 
@@ -50,14 +49,12 @@ Item {
     property int highScore: 0
     property int moves: 0
     property string mode: ""
-    property ParticleSystem ps: particleSystem
     //For easy theming
     property alias backgroundVisible: bg.visible
     property string background: "gfx/background.png"
     property string blockFile: "Block.qml"
     property int blockSize: Settings.blockSize
     onBlockFileChanged: Logic.changeBlock(blockFile);
-    property alias particlePack: auxLoader.source
     //For multiplayer
     property int score2: 0
     property int curTurn: 1
@@ -71,10 +68,8 @@ Item {
     signal puzzleLost //Since root is tracking the puzzle progress
     function showPuzzleEnd (won) {
         if (won) {
-            smokeParticle.color = Qt.rgba(0,1,0,0);
             puzzleWin.play();
         } else {
-            smokeParticle.color = Qt.rgba(1,0,0,0);
             puzzleFail.play();
             puzzleLost();
         }
@@ -142,11 +137,10 @@ Item {
         p1WonImg.opacity = 0;
         p2WonImg.opacity = 0;
     }
-    SmokeText { id: puzzleWin; source: "gfx/icon-ok.png"; system: particleSystem }
-    SmokeText { id: puzzleFail; source: "gfx/icon-fail.png"; system: particleSystem }
+    SmokeText { id: puzzleWin; source: "gfx/icon-ok.png" }
+    SmokeText { id: puzzleFail; source: "gfx/icon-fail.png" }
 
     onSwapPlayers: {
-        smokeParticle.color = "yellow"
         Logic.turnChange();
         if (curTurn == 1) {
             p1Text.play();
@@ -164,13 +158,11 @@ Item {
 
     SmokeText {
         id: p1Text; source: "gfx/text-p1-go.png";
-        system: particleSystem; playerNum: 1
         opacity: p1WonImg.opacity + p2WonImg.opacity > 0 ? 0 : 1
     }
 
     SmokeText {
         id: p2Text; source: "gfx/text-p2-go.png";
-        system: particleSystem; playerNum: 2
         opacity: p1WonImg.opacity + p2WonImg.opacity > 0 ? 0 : 1
     }
 
@@ -198,31 +190,6 @@ Item {
         opacity: 0
         Behavior on opacity { NumberAnimation {} }
         z: 10
-    }
-
-    ParticleSystem{
-        id: particleSystem;
-        anchors.fill: parent
-        z: 5
-        ImageParticle {
-            id: smokeParticle
-            groups: ["smoke"]
-            source: "gfx/particle-smoke.png"
-            alpha: 0.1
-            alphaVariation: 0.1
-            color: "yellow"
-        }
-        Loader {
-            id: auxLoader
-            anchors.fill: parent
-            source: "PrimaryPack.qml"
-            onItemChanged: {
-                if (item && "particleSystem" in item)
-                    item.particleSystem = particleSystem
-                if (item && "gameArea" in item)
-                    item.gameArea = gameCanvas
-            }
-        }
     }
 }
 

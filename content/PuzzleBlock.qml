@@ -39,14 +39,12 @@
 ****************************************************************************/
 
 import QtQuick 2.0
-import QtQuick.Particles 2.0
 
 Item {
     id: block
     property bool dying: false
     property bool spawned: false
     property int type: 0
-    property ParticleSystem particleSystem
 
     Behavior on x {
         enabled: spawned;
@@ -76,24 +74,6 @@ Item {
         anchors.horizontalCenterOffset: 4
     }
 
-    //Foreground particles
-    BlockEmitter {
-        id: particles
-        system: particleSystem
-        group: {
-            if (type == 0){
-                "red";
-            } else if (type == 1) {
-                "blue";
-            } else if (type == 2) {
-                "green";
-            } else {
-                "yellow";
-            }
-        }
-        anchors.fill: parent
-    }
-
     states: [
         State {
             name: "AliveState"; when: spawned == true && dying == false
@@ -103,7 +83,6 @@ Item {
         State {
             name: "DeathState"; when: dying == true
             PropertyChanges { target: img; scale: 2 }
-            StateChangeScript { script: particles.pulse(200); }
             PropertyChanges { target: img; opacity: 0 }
             StateChangeScript { script: block.destroy(1000); }
         }

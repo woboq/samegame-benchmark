@@ -39,12 +39,10 @@
 ****************************************************************************/
 
 import QtQuick 2.0
-import QtQuick.Particles 2.0
 
 Item {
     id: container //Positioned where the 48x48 S/G should be
     property alias running: mainAnim.running
-    property ParticleSystem particleSystem
     property int dur: 500
     signal boomTime
     Image {
@@ -56,25 +54,6 @@ Item {
         id: g1
         source: "gfx/logo-g.png"
         y: -128
-    }
-    Column {
-        Repeater {
-            model: 2
-            Item {
-                width: 48
-                height: 48
-                BlockEmitter {
-                    id: emitter
-                    anchors.fill: parent
-                    group: "red"
-                    system: particleSystem
-                    Connections {
-                        target: container
-                        onBoomTime: emitter.pulse(100);
-                    }
-                }
-            }
-        }
     }
     SequentialAnimation {
         id: mainAnim

@@ -374,8 +374,7 @@ function createBlock(column,row,type)
                 "x": column*gameCanvas.blockSize,
                 "y": -1*gameCanvas.blockSize,
                 "width": gameCanvas.blockSize,
-                "height": gameCanvas.blockSize,
-                "particleSystem": gameCanvas.ps});
+                "height": gameCanvas.blockSize});
         if (dynamicObject == null){
             console.log("error creating block");
             console.log(component.errorString());
