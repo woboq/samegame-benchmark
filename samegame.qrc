@@ -57,12 +57,9 @@
         <file>content/levels/level9.qml</file>
         <file>content/levels/TemplateBase.qml</file>
         <file>content/SamegameText.qml</file>
-        <file>content/SimpleBlock.qml</file>
-        <file>content/Block.qml</file>
         <file>content/Button.qml</file>
         <file>content/GameArea.qml</file>
         <file>content/LogoAnimation.qml</file>
-        <file>content/PuzzleBlock.qml</file>
         <file>content/SmokeText.qml</file>
     </qresource>
 </RCC>

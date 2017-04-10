@@ -50,6 +50,83 @@
 #include <QStandardPaths>
 #include <QQmlEngine>
 
+#include <QtQuick/private/qquickimage_p.h>
+#include <QtQuick/private/qquickspringanimation_p.h>
+
+class BlockItem : public QQuickItem {
+    Q_OBJECT
+    Q_PROPERTY(int type READ type WRITE setType NOTIFY typeChanged)
+    int m_type = -1;
+    QQuickImage *m_image = new QQuickImage(this);
+    QQuickSpringAnimation *m_xAnim = new QQuickSpringAnimation(this);
+    QQuickSpringAnimation *m_yAnim = new QQuickSpringAnimation(this);
+    QQuickNumberAnimation *m_opacityAnim = new QQuickNumberAnimation(this);
+public:
+    BlockItem(QQuickItem *parent)
+        : QQuickItem(parent)
+    {
+        m_xAnim->setTargetObject(this);
+        m_xAnim->setProperty(QStringLiteral("x"));
+        m_xAnim->setSpring(2);
+        m_xAnim->setDamping(0.2);
+
+        m_yAnim->setTargetObject(this);
+        m_yAnim->setProperty(QStringLiteral("y"));
+        m_yAnim->setSpring(2);
+        m_yAnim->setDamping(0.2);
+
+        m_opacityAnim->setTargetObject(m_image);
+        m_opacityAnim->setProperty(QStringLiteral("opacity"));
+        m_opacityAnim->setDuration(200);
+    }
+
+    Q_INVOKABLE void animateXTo(QVariant to) {
+        m_xAnim->setTo(to.toReal());
+        m_xAnim->restart();
+    }
+    Q_INVOKABLE void animateYTo(QVariant to) {
+        m_yAnim->setTo(to.toReal());
+        m_yAnim->restart();
+    }
+    Q_INVOKABLE void fadeIn() {
+        m_opacityAnim->setTo(1);
+        m_opacityAnim->restart();
+    }
+    Q_INVOKABLE void fadeOut() {
+        m_opacityAnim->setTo(0);
+        m_opacityAnim->restart();
+        // Destroy after the animation
+        connect(m_opacityAnim, &QQuickNumberAnimation::stopped, this, &BlockItem::deleteLater);
+    }
+
+    int type() { return m_type; }
+    void setType(int type) {
+        if (m_type == type)
+            return;
+        m_type = type;
+        emit typeChanged();
+
+        if (type == 0){
+            m_image->setSource(QUrl("qrc:/demos/samegame/content/gfx/red.png"));
+        } else if (type == 1) {
+            m_image->setSource(QUrl("qrc:/demos/samegame/content/gfx/blue.png"));
+        } else if (type == 2) {
+            m_image->setSource(QUrl("qrc:/demos/samegame/content/gfx/green.png"));
+        } else {
+            m_image->setSource(QUrl("qrc:/demos/samegame/content/gfx/yellow.png"));
+        }
+    }
+
+signals:
+    void typeChanged();
+
+protected:
+    void geometryChanged(const QRectF &newGeometry, const QRectF &) override {
+        m_image->setSize(newGeometry.size());
+    }
+
+};
+
 class SameGameImpl : public QObject, public QQmlParserStatus {
     Q_OBJECT
     int m_maxColumn = 10;
@@ -57,9 +134,7 @@ class SameGameImpl : public QObject, public QQmlParserStatus {
     const int m_types = 3;
     int m_maxIndex = m_maxColumn*m_maxRow;
     QVector<QQuickItem*> m_board;
-    QString m_blockSrc = "Block.qml";
     QDateTime m_gameDuration;
-    QScopedPointer<QQmlComponent> m_component;
     QuickImplPointer<GameAreaImpl> m_gameCanvas;
     bool m_betweenTurns = false;
 
@@ -86,13 +161,10 @@ public:
     void classBegin() Q_DECL_OVERRIDE { }
     void componentComplete() Q_DECL_OVERRIDE
     {
-        m_component.reset(new QQmlComponent(qmlEngine(this), QUrl("qrc:///demos/samegame/content/" + m_blockSrc)));
     }
 
-    Q_INVOKABLE void changeBlock(const QString &src)
+    Q_INVOKABLE void changeBlock(const QString &)
     {
-        m_blockSrc = src;
-        m_component.reset(new QQmlComponent(qmlEngine(this), QUrl("qrc:///demos/samegame/content/" + m_blockSrc)));
     }
 
     Q_INVOKABLE void cleanUp()
@@ -422,41 +494,19 @@ private:
 
     bool createBlock(int column, int row, int type)
     {
-        // Note that we don't wait for the component to become ready. This will
-        // only work if the block QML is a local file. Otherwise the component will
-        // not be ready immediately. There is a statusChanged signal on the
-        // component you could use if you want to wait to load remote files.
-        if (m_component->isReady()) {
-            if (type < 0 || type > 4) {
-                qWarning("Invalid type requested");//TODO: Is this triggered by custom levels much?
-                return false;
-            }
-            QQuickItem *dynamicObject = qobject_cast<QQuickItem*>(m_component->beginCreate(qmlContext(this)));
-            if (!dynamicObject) {
-                qWarning("error creating block");
-                qWarning() << m_component->errorString();
-                return false;
-            }
-            int blockSize = m_gameCanvas->property("blockSize").toInt();
-            dynamicObject->setParentItem(m_gameCanvas);
-            dynamicObject->setProperty("type", type);
-            dynamicObject->setProperty("x", column * blockSize);
-            dynamicObject->setProperty("y", -1 * blockSize);
-            dynamicObject->setProperty("width", blockSize);
-            dynamicObject->setProperty("height", blockSize);
-            m_component->completeCreate();
+        QQuickItem *dynamicObject = new BlockItem(m_gameCanvas);
 
-            // The block will be destroyed by QML.
-            QQmlEngine::setObjectOwnership(dynamicObject, QQmlEngine::JavaScriptOwnership);
+        int blockSize = m_gameCanvas->property("blockSize").toInt();
+        dynamicObject->setParentItem(m_gameCanvas);
+        dynamicObject->setProperty("type", type);
+        dynamicObject->setProperty("x", column * blockSize);
+        dynamicObject->setProperty("y", -1 * blockSize);
+        dynamicObject->setProperty("width", blockSize);
+        dynamicObject->setProperty("height", blockSize);
 
-            QMetaObject::invokeMethod(dynamicObject, "animateYTo", Q_ARG(QVariant, row * blockSize));
-            QMetaObject::invokeMethod(dynamicObject, "fadeIn");
-            m_board[index(column,row)] = dynamicObject;
-        } else {
-            qWarning("error loading block component");
-            qWarning() << m_component->errorString();
-            return false;
-        }
+        QMetaObject::invokeMethod(dynamicObject, "animateYTo", Q_ARG(QVariant, row * blockSize));
+        QMetaObject::invokeMethod(dynamicObject, "fadeIn");
+        m_board[index(column,row)] = dynamicObject;
         return true;
     }
 

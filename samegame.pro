@@ -1,6 +1,6 @@
 TEMPLATE = app
 
-QT += qml quick sql testlib
+QT += qml quick sql testlib quick-private qml-private
 HEADERS += \
     samegameimpl.h \
     gameareaimpl.h
