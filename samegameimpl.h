@@ -80,12 +80,12 @@ public:
         m_opacityAnim->setDuration(200);
     }
 
-    Q_INVOKABLE void animateXTo(QVariant to) {
-        m_xAnim->setTo(to.toReal());
+    Q_INVOKABLE void animateXTo(qreal to) {
+        m_xAnim->setTo(to);
         m_xAnim->restart();
     }
-    Q_INVOKABLE void animateYTo(QVariant to) {
-        m_yAnim->setTo(to.toReal());
+    Q_INVOKABLE void animateYTo(qreal to) {
+        m_yAnim->setTo(to);
         m_yAnim->restart();
     }
     Q_INVOKABLE void fadeIn() {
@@ -133,7 +133,7 @@ class SameGameImpl : public QObject, public QQmlParserStatus {
     int m_maxRow = 13;
     const int m_types = 3;
     int m_maxIndex = m_maxColumn*m_maxRow;
-    QVector<QQuickItem*> m_board;
+    QVector<BlockItem*> m_board;
     QDateTime m_gameDuration;
     QuickImplPointer<GameAreaImpl> m_gameCanvas;
     bool m_betweenTurns = false;
@@ -294,7 +294,7 @@ public:
         for (int row = 1; row <= 5; row++) {
             for (int col = 0; col < 5; col++) {
                 if (m_board[index(col, m_maxRow - row)]) {
-                    QMetaObject::invokeMethod(m_board[index(col, m_maxRow - row)], "fadeOut");
+                    m_board[index(col, m_maxRow - row)]->fadeOut();
                     m_board[index(col, m_maxRow - row)] = nullptr;
                 }
             }
@@ -340,7 +340,7 @@ private:
         floodFill(column, row - 1, type);
         if (first == true && m_fillFound == 0)
             return; // Can't remove single blocks
-        QMetaObject::invokeMethod(m_board[index(column, row)], "fadeOut");
+        m_board[index(column, row)]->fadeOut();
         m_board[index(column, row)] = nullptr;
         m_fillFound += 1;
     }
@@ -356,7 +356,7 @@ private:
                 } else {
                     if (fallDist > 0) {
                         auto obj = m_board[index(column, row)];
-                        QMetaObject::invokeMethod(obj, "animateYTo", Q_ARG(QVariant, (row + fallDist) * m_gameCanvas->property("blockSize").toInt()));
+                        obj->animateYTo((row + fallDist) * m_gameCanvas->property("blockSize").toInt());
                         m_board[index(column, row + fallDist)] = obj;
                         m_board[index(column, row)] = nullptr;
                     }
@@ -374,7 +374,7 @@ private:
                         auto obj = m_board[index(column, row)];
                         if (!obj)
                             continue;
-                        QMetaObject::invokeMethod(obj, "animateXTo", Q_ARG(QVariant, (column - fallDist) * m_gameCanvas->property("blockSize").toInt()));
+                        obj->animateXTo((column - fallDist) * m_gameCanvas->property("blockSize").toInt());
                         m_board[index(column - fallDist,row)] = obj;
                         m_board[index(column, row)] = nullptr;
                     }
@@ -394,7 +394,7 @@ private:
                 } else {
                     if (fallDist > 0) {
                         auto obj = m_board[index(column, row)];
-                        QMetaObject::invokeMethod(obj, "animateYTo", Q_ARG(QVariant, (row - fallDist) * m_gameCanvas->property("blockSize").toInt()));
+                        obj->animateYTo((row - fallDist) * m_gameCanvas->property("blockSize").toInt());
                         m_board[index(column, row - fallDist)] = obj;
                         m_board[index(column, row)] = nullptr;
                     }
@@ -412,7 +412,7 @@ private:
                         auto obj = m_board[index(column, row)];
                         if (!obj)
                             continue;
-                        QMetaObject::invokeMethod(obj, "animateXTo", Q_ARG(QVariant, (column - fallDist) * m_gameCanvas->property("blockSize").toInt()));
+                        obj->animateXTo((column - fallDist) * m_gameCanvas->property("blockSize").toInt());
                         m_board[index(column - fallDist,row)] = obj;
                         m_board[index(column, row)] = nullptr;
                     }
@@ -494,18 +494,18 @@ private:
 
     bool createBlock(int column, int row, int type)
     {
-        QQuickItem *dynamicObject = new BlockItem(m_gameCanvas);
+        BlockItem *dynamicObject = new BlockItem(m_gameCanvas);
 
         int blockSize = m_gameCanvas->property("blockSize").toInt();
         dynamicObject->setParentItem(m_gameCanvas);
-        dynamicObject->setProperty("type", type);
-        dynamicObject->setProperty("x", column * blockSize);
-        dynamicObject->setProperty("y", -1 * blockSize);
-        dynamicObject->setProperty("width", blockSize);
-        dynamicObject->setProperty("height", blockSize);
+        dynamicObject->setType(type);
+        dynamicObject->setX(column * blockSize);
+        dynamicObject->setY(-1 * blockSize);
+        dynamicObject->setWidth(blockSize);
+        dynamicObject->setHeight(blockSize);
 
-        QMetaObject::invokeMethod(dynamicObject, "animateYTo", Q_ARG(QVariant, row * blockSize));
-        QMetaObject::invokeMethod(dynamicObject, "fadeIn");
+        dynamicObject->animateYTo(row * blockSize);
+        dynamicObject->fadeIn();
         m_board[index(column,row)] = dynamicObject;
         return true;
     }
