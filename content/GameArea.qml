@@ -39,7 +39,7 @@
 ****************************************************************************/
 
 import QtQuick 2.0
-import "samegame.js" as Logic
+import main 1.0
 import "."
 
 Item {
@@ -54,30 +54,24 @@ Item {
     property string background: "gfx/background.png"
     property string blockFile: "Block.qml"
     property int blockSize: Settings.blockSize
-    onBlockFileChanged: Logic.changeBlock(blockFile);
+    onBlockFileChanged: root.impl.changeBlock(blockFile);
     //For multiplayer
     property int score2: 0
-    property int curTurn: 1
     property bool autoTurnChange: false
-    signal swapPlayers
-    property bool swapping: false
-    //onSwapPlayers: if (autoTurnChange) Logic.turnChange();//Now implemented below
     //For puzzle
     property url level
     property bool puzzleWon: false
     signal puzzleLost //Since root is tracking the puzzle progress
-    function showPuzzleEnd (won) {
-        if (won) {
-            puzzleWin.play();
-        } else {
-            puzzleFail.play();
-            puzzleLost();
+
+    property QtObject impl: GameAreaImpl {
+        Component.onCompleted: {
+            mouseArea.clicked.connect(onMouseClicked);
+            gameCanvas.gameOverChanged.connect(showWonImg);
+            gameCanvas.modeChanged.connect(hideWonImg);
+            gameCanvas.modeChanged.connect(hidePuzzleTextBubble);
         }
     }
-    function showPuzzleGoal (str) {
-        puzzleTextBubble.opacity = 1;
-        puzzleTextLabel.text = str;
-    }
+
     Image {
         id: bg
         z: -1
@@ -85,16 +79,9 @@ Item {
         source: background;
         fillMode: Image.PreserveAspectCrop
     }
-
     MouseArea {
-        anchors.fill: parent; onClicked: {
-            if (puzzleTextBubble.opacity == 1) {
-                puzzleTextBubble.opacity = 0;
-                Logic.finishLoadingMap();
-            } else if (!swapping) {
-                Logic.handleClick(mouse.x,mouse.y);
-            }
-        }
+        id: mouseArea
+        anchors.fill: parent
     }
 
     Image {
@@ -118,10 +105,6 @@ Item {
         Behavior on opacity { NumberAnimation {} }
         z: 10
         source: "gfx/bubble-puzzle.png"
-        Connections {
-            target: gameCanvas
-            onModeChanged: if (mode != "puzzle" && puzzleTextBubble.opacity > 0) puzzleTextBubble.opacity = 0;
-        }
         Text {
             id: puzzleTextLabel
             width: parent.width - 24
@@ -133,27 +116,14 @@ Item {
             wrapMode: Text.WordWrap
         }
     }
-    onModeChanged: {
-        p1WonImg.opacity = 0;
-        p2WonImg.opacity = 0;
-    }
     SmokeText { id: puzzleWin; source: "gfx/icon-ok.png" }
     SmokeText { id: puzzleFail; source: "gfx/icon-fail.png" }
 
-    onSwapPlayers: {
-        Logic.turnChange();
-        if (curTurn == 1) {
-            p1Text.play();
-        } else {
-            p2Text.play();
-        }
-        clickDelay.running = true;
-    }
     SequentialAnimation {
         id: clickDelay
-        ScriptAction { script: gameCanvas.swapping = true; }
+        ScriptAction { script: impl.swapping = true; }
         PauseAnimation { duration: 750 }
-        ScriptAction { script: gameCanvas.swapping = false; }
+        ScriptAction { script: impl.swapping = false; }
     }
 
     SmokeText {
@@ -166,15 +136,6 @@ Item {
         opacity: p1WonImg.opacity + p2WonImg.opacity > 0 ? 0 : 1
     }
 
-    onGameOverChanged: {
-        if (gameCanvas.mode == "multiplayer") {
-            if (gameCanvas.score >= gameCanvas.score2) {
-                p1WonImg.opacity = 1;
-            } else {
-                p2WonImg.opacity = 1;
-            }
-        }
-    }
     Image {
         id: p1WonImg
         source: "gfx/text-p1-won.png"

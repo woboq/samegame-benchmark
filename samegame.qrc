@@ -63,7 +63,6 @@
         <file>content/GameArea.qml</file>
         <file>content/LogoAnimation.qml</file>
         <file>content/PuzzleBlock.qml</file>
-        <file>content/samegame.js</file>
         <file>content/SmokeText.qml</file>
     </qresource>
 </RCC>

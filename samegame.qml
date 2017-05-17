@@ -39,29 +39,30 @@
 ****************************************************************************/
 
 import QtQuick 2.0
-import "content/samegame.js" as Logic
 import "content"
+import main 1.0
 
 Rectangle {
     id: root
     width: Settings.screenWidth; height: Settings.screenHeight
     property int acc: 0
+    property QtObject impl: SameGameImpl { }
 
     function startGameBench() {
-        Logic.startNewGame(gameCanvas)
+        impl.startNewGame(gameCanvas)
     }
     function handleClickBench() {
-        Logic.handleClick(0, 200)
+        impl.handleClick(0, 200)
     }
 
     function cleanUp() {
-        Logic.cleanUp()
+        impl.cleanUp()
     }
 
     function loadPuzzle() {
         if (gameCanvas.mode != "")
-            Logic.cleanUp();
-        Logic.startNewGame(gameCanvas,"puzzle","levels/level"+acc+".qml")
+            impl.cleanUp();
+        impl.startNewGame(gameCanvas,"puzzle","levels/level"+acc+".qml")
     }
     function nextPuzzle() {
         acc = (acc + 1) % 10;
@@ -73,7 +74,7 @@ Rectangle {
         running : gameCanvas.gameOver && gameCanvas.mode == "puzzle" //mode will be reset by cleanUp();
         repeat  : false
         onTriggered: {
-            Logic.cleanUp();
+            impl.cleanUp();
             nextPuzzle();
         }
     }
@@ -143,7 +144,7 @@ Rectangle {
                     interval: Settings.menuDelay
                     running : false
                     repeat  : false
-                    onTriggered: Logic.startNewGame(gameCanvas)
+                    onTriggered: impl.startNewGame(gameCanvas)
                 }
             }
 
@@ -164,7 +165,7 @@ Rectangle {
                     interval: Settings.menuDelay
                     running : false
                     repeat  : false
-                    onTriggered: Logic.startNewGame(gameCanvas, "multiplayer")
+                    onTriggered: impl.startNewGame(gameCanvas, "multiplayer")
                 }
             }
 
@@ -185,7 +186,7 @@ Rectangle {
                     interval: Settings.menuDelay
                     running : false
                     repeat  : false
-                    onTriggered: Logic.startNewGame(gameCanvas, "endless")
+                    onTriggered: impl.startNewGame(gameCanvas, "endless")
                 }
             }
 
@@ -269,7 +270,7 @@ Rectangle {
                 repeat: true
                 running: gameCanvas.mode == "puzzle" && !gameCanvas.gameOver
                 onTriggered: {
-                    var elapsed = Math.floor((new Date() - Logic.gameDuration)/ 1000.0);
+                    var elapsed = Math.floor((new Date() - impl.gameDuration)/ 1000.0);
                     var mins = Math.floor(elapsed/60.0);
                     var secs = (elapsed % 60);
                     puzzleTime.text =  (mins < 10 ? "0" : "") + mins + ":" + (secs < 10 ? "0" : "") + secs;
@@ -303,7 +304,7 @@ Rectangle {
             height: Settings.toolButtonHeight
             imgSrc: "content/gfx/but-menu.png"
             visible: (root.state == "in-game");
-            onClicked: {root.state = ""; Logic.cleanUp(); gameCanvas.mode = ""}
+            onClicked: {root.state = ""; impl.cleanUp(); gameCanvas.mode = ""}
             anchors { left: quitButton.right; verticalCenter: parent.verticalCenter; leftMargin: 0 }
         }
         Button {
@@ -313,7 +314,7 @@ Rectangle {
             visible: (root.state == "in-game");
             opacity: gameCanvas.gameOver && (gameCanvas.mode == "arcade" || gameCanvas.mode == "multiplayer")
             Behavior on opacity{ NumberAnimation {} }
-            onClicked: {if (gameCanvas.gameOver) { Logic.startNewGame(gameCanvas, gameCanvas.mode);}}
+            onClicked: {if (gameCanvas.gameOver) { impl.startNewGame(gameCanvas, gameCanvas.mode);}}
             anchors { right: parent.right; verticalCenter: parent.verticalCenter; rightMargin: 11 }
         }
         Button {
@@ -363,6 +364,6 @@ Rectangle {
 
     //"Debug mode"
     focus: true
-    Keys.onAsteriskPressed: Logic.nuke();
+    Keys.onAsteriskPressed: impl.nuke();
     Keys.onSpacePressed: gameCanvas.puzzleWon = true;
 }

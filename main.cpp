@@ -37,6 +37,9 @@
 ** $QT_END_LICENSE$
 **
 ****************************************************************************/
+#include "gameareaimpl.h"
+#include "samegameimpl.h"
+
 #include <QDir>
 #include <QGuiApplication>
 #include <QQmlEngine>
@@ -122,6 +125,8 @@ private slots:
 
 int main(int argc, char* argv[])
 {
+    qmlRegisterType<SameGameImpl>("main", 1, 0, "SameGameImpl");
+    qmlRegisterType<GameAreaImpl>("main", 1, 0, "GameAreaImpl");
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
     QGuiApplication app(argc,argv);
     app.setOrganizationName("QtProject");
