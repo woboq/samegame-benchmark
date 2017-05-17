@@ -37,5 +37,123 @@
 ** $QT_END_LICENSE$
 **
 ****************************************************************************/
-#include "../../shared/shared.h"
-DECLARATIVE_EXAMPLE_MAIN(demos/samegame/samegame)
+#include <QDir>
+#include <QGuiApplication>
+#include <QQmlEngine>
+#include <QQmlFileSelector>
+#include <QQuickView> //Not using QQmlApplicationEngine because many examples don't have a Window{}
+
+#include <QtTest>
+#include <QQuickItem>
+
+class SameGameBenchmark: public QObject
+{
+    QQuickView *view;
+    Q_OBJECT
+public:
+    SameGameBenchmark(QQuickView *view)
+        : view(view)
+    { }
+
+private slots:
+    static void countChildren(QObject *obj, const QString &rootName, unsigned &numObjects, unsigned &numItems, bool count = false)
+    {
+        if (obj->objectName() == rootName)
+            count = true;
+        if (count) {
+            ++numObjects;
+            if (qobject_cast<QQuickItem*>(obj))
+                ++numItems;
+        }
+        foreach (auto *child, obj->children())
+            countChildren(child, rootName, numObjects, numItems, count);
+    }
+
+    void initTestCase()
+    {
+        view->rootObject()->setProperty("state", "in-game");
+
+        QMetaObject::invokeMethod(view->rootObject(), "startGameBench");
+        unsigned numObjects = 0, numItems = 0;
+        countChildren(view->rootObject(), "gameCanvas", numObjects, numItems);
+        qDebug() << "GameArea has" << numObjects << "QObjects of which" << numItems << "are QQuickItems.";
+
+    }
+    void cleanupTestCase()
+    {
+        QMetaObject::invokeMethod(view->rootObject(), "cleanUp");
+    }
+
+    void startGameBenchmark()
+    {
+        QElapsedTimer t;
+        quint64 totalTime = 0;
+        const int numIterations = 100;
+        for (int i = 0; i < numIterations; ++i)
+        {
+            QMetaObject::invokeMethod(view->rootObject(), "cleanUp");
+            // QML object destroy() is posted to the event loop and we must process them now to avoid accumulating objects.
+            QCoreApplication::sendPostedEvents(0, QEvent::DeferredDelete);
+
+            t.restart();
+            QMetaObject::invokeMethod(view->rootObject(), "startGameBench");
+            totalTime += t.nsecsElapsed();
+        }
+        QTest::setBenchmarkResult(double(totalTime) / numIterations, QTest::WalltimeNanoseconds);
+    }
+    void handleClickBenchmark()
+    {
+        QElapsedTimer t;
+        quint64 totalTime = 0;
+        const int numIterations = 100;
+        for (int i = 0; i < numIterations; ++i)
+        {
+            QMetaObject::invokeMethod(view->rootObject(), "startGameBench");
+            // QML object destroy() is posted to the event loop and we must process them now to avoid accumulating objects.
+            QCoreApplication::sendPostedEvents(0, QEvent::DeferredDelete);
+
+            t.restart();
+            QMetaObject::invokeMethod(view->rootObject(), "handleClickBench");
+            totalTime += t.nsecsElapsed();
+        }
+        QTest::setBenchmarkResult(double(totalTime) / numIterations, QTest::WalltimeNanoseconds);
+    }
+};
+
+
+int main(int argc, char* argv[])
+{
+    QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+    QGuiApplication app(argc,argv);
+    app.setOrganizationName("QtProject");
+    app.setOrganizationDomain("qt-project.org");
+    app.setApplicationName(QFileInfo(app.applicationFilePath()).baseName());
+    QQuickView view;
+    if (qgetenv("QT_QUICK_CORE_PROFILE").toInt()) {
+        QSurfaceFormat f = view.format();
+        f.setProfile(QSurfaceFormat::CoreProfile);
+        f.setVersion(4, 4);
+        view.setFormat(f);
+    }
+    view.connect(view.engine(), &QQmlEngine::quit, &app, &QCoreApplication::quit);
+    new QQmlFileSelector(view.engine(), &view);
+    view.setSource(QUrl("qrc:///demos/samegame/samegame.qml")); 
+    if (view.status() == QQuickView::Error)
+        return -1;
+    view.setResizeMode(QQuickView::SizeRootObjectToView);
+    if (QGuiApplication::platformName() == QLatin1String("qnx") || 
+          QGuiApplication::platformName() == QLatin1String("eglfs")) {
+        view.showFullScreen();
+    } else {
+        view.show();
+    }
+
+    // Create the benchmark object manually and execute tests before starting the application.
+    SameGameBenchmark bench(&view);
+    QTest::qExec(&bench, argc, argv);
+
+    return app.exec();
+}
+
+
+#include "main.moc"

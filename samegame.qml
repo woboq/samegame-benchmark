@@ -48,6 +48,16 @@ Rectangle {
     width: Settings.screenWidth; height: Settings.screenHeight
     property int acc: 0
 
+    function startGameBench() {
+        Logic.startNewGame(gameCanvas)
+    }
+    function handleClickBench() {
+        Logic.handleClick(0, 200)
+    }
+
+    function cleanUp() {
+        Logic.cleanUp()
+    }
 
     function loadPuzzle() {
         if (gameCanvas.mode != "")
@@ -76,6 +86,7 @@ Rectangle {
 
     GameArea {
         id: gameCanvas
+        objectName: "gameCanvas"
         z: 1
         y: Settings.headerHeight
 

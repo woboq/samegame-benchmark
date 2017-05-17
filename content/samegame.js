@@ -364,7 +364,7 @@ function createBlock(column,row,type)
     // component you could use if you want to wait to load remote files.
     if (component.status == 1){
         if (type == undefined)
-            type = Math.floor(Math.random() * types);
+            type = column % types;
         if (type < 0 || type > 4) {
             console.log("Invalid type requested");//TODO: Is this triggered by custom levels much?
             return;
