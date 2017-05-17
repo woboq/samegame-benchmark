@@ -40,7 +40,6 @@
 #include <QDir>
 #include <QGuiApplication>
 #include <QQmlEngine>
-#include <QQmlFileSelector>
 #include <QQuickView> //Not using QQmlApplicationEngine because many examples don't have a Window{}
 
 #include <QtTest>
@@ -136,7 +135,6 @@ int main(int argc, char* argv[])
         view.setFormat(f);
     }
     view.connect(view.engine(), &QQmlEngine::quit, &app, &QCoreApplication::quit);
-    new QQmlFileSelector(view.engine(), &view);
     view.setSource(QUrl("qrc:///demos/samegame/samegame.qml")); 
     if (view.status() == QQuickView::Error)
         return -1;
