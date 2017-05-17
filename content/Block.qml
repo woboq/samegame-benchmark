@@ -42,18 +42,44 @@ import QtQuick 2.0
 
 Item {
     id: block
-    property bool dying: false
-    property bool spawned: false
     property int type: 0
 
-    Behavior on x {
-        enabled: spawned;
-        SpringAnimation{ spring: 2; damping: 0.2 }
+    function animateXTo(to) {
+        xAnim.to = to;
+        xAnim.restart();
     }
-    Behavior on y {
-        SpringAnimation{ spring: 2; damping: 0.2 }
+    function animateYTo(to) {
+        yAnim.to = to;
+        yAnim.restart();
     }
-
+    function fadeIn() {
+        opacityAnim.to = 1;
+        opacityAnim.restart();
+    }
+    function fadeOut() {
+        opacityAnim.to = 0;
+        opacityAnim.restart();
+    }
+    SpringAnimation{
+        id: xAnim
+        target: block
+        property: "x"
+        spring: 2
+        damping: 0.2
+    }
+    SpringAnimation{
+        id: yAnim
+        target: block
+        property: "y"
+        spring: 2
+        damping: 0.2
+    }
+    NumberAnimation {
+        id: opacityAnim
+        target: img
+        property: "opacity"
+        duration: 200
+    }
     Image {
         id: img
         source: {
@@ -68,20 +94,6 @@ Item {
             }
         }
         opacity: 0
-        Behavior on opacity { NumberAnimation { duration: 200 } }
         anchors.fill: parent
     }
-
-    states: [
-        State {
-            name: "AliveState"; when: spawned == true && dying == false
-            PropertyChanges { target: img; opacity: 1 }
-        },
-
-        State {
-            name: "DeathState"; when: dying == true
-            PropertyChanges { target: img; opacity: 0 }
-            StateChangeScript { script: block.destroy(1000); }
-        }
-    ]
 }

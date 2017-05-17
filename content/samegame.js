@@ -195,7 +195,7 @@ function floodFill(column,row,type)
     floodFill(column, row - 1, type);
     if (first == true && fillFound == 0)
         return; // Can't remove single blocks
-    board[index(column, row)].dying = true;
+    board[index(column, row)].fadeOut();
     board[index(column, row)] = null;
     fillFound += 1;
 }
@@ -211,7 +211,7 @@ function shuffleDown()
             } else {
                 if (fallDist > 0) {
                     var obj = board[index(column, row)];
-                    obj.y = (row + fallDist) * gameCanvas.blockSize;
+                    obj.animateYTo((row + fallDist) * gameCanvas.blockSize);
                     board[index(column, row + fallDist)] = obj;
                     board[index(column, row)] = null;
                 }
@@ -229,7 +229,7 @@ function shuffleDown()
                     obj = board[index(column, row)];
                     if (obj == null)
                         continue;
-                    obj.x = (column - fallDist) * gameCanvas.blockSize;
+                    obj.animateXTo((column - fallDist) * gameCanvas.blockSize);
                     board[index(column - fallDist,row)] = obj;
                     board[index(column, row)] = null;
                 }
@@ -250,7 +250,7 @@ function shuffleUp()
             } else {
                 if (fallDist > 0) {
                     var obj = board[index(column, row)];
-                    obj.y = (row - fallDist) * gameCanvas.blockSize;
+                    obj.animateYTo((row - fallDist) * gameCanvas.blockSize);
                     board[index(column, row - fallDist)] = obj;
                     board[index(column, row)] = null;
                 }
@@ -268,7 +268,7 @@ function shuffleUp()
                     obj = board[index(column, row)];
                     if (obj == null)
                         continue;
-                    obj.x = (column - fallDist) * gameCanvas.blockSize;
+                    obj.animateXTo((column - fallDist) * gameCanvas.blockSize);
                     board[index(column - fallDist,row)] = obj;
                     board[index(column, row)] = null;
                 }
@@ -380,8 +380,8 @@ function createBlock(column,row,type)
             console.log(component.errorString());
             return false;
         }
-        dynamicObject.y = row*gameCanvas.blockSize;
-        dynamicObject.spawned = true;
+        dynamicObject.animateYTo(row*gameCanvas.blockSize);
+        dynamicObject.fadeIn();
 
         board[index(column,row)] = dynamicObject;
     }else{
@@ -563,7 +563,7 @@ function nuke() //For "Debug mode"
     for (var row = 1; row <= 5; row++) {
         for (var col = 0; col < 5; col++) {
             if (board[index(col, maxRow - row)] != null) {
-                board[index(col, maxRow - row)].dying = true;
+                board[index(col, maxRow - row)].fadeOut();
                 board[index(col, maxRow - row)] = null;
             }
         }
